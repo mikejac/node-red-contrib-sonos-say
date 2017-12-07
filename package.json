@@ -1,0 +1,28 @@
+{
+    "name"         : "node-red-contrib-sonos-say",
+    "version"      : "0.0.3",
+    "description"  : "SONOS Text-to-Speech Interface",
+    "homepage"     : "https://github.com/mikejac/node-red-contrib-sonos-say",
+    "scripts": {},
+    "dependencies": {
+        "async": "2.1.4",
+        "follow-redirects": "1.2.1",
+        "url": "0.10.3",
+        "querystring": "0.2.0"
+    },
+    "keywords"     : [ 
+                       "sonos",
+                       "tts"
+                     ],
+    "node-red"     : {
+        "nodes": {
+            "client": "client.js"
+        }
+    },
+    "repository": {
+        "type"     : "git",
+        "url"      : "https://github.com/mikejac/node-red-contrib-sonos-say.git"
+    },
+    "author"       : "github.com/mikejac",
+    "license"      : "Apache-2.0"
+}

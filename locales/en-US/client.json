@@ -1,0 +1,29 @@
+{
+    "sonos": {
+        "label": {
+            "server": "Server",
+            "port": "Port",
+            "lang": "Language",
+            "sonos-client": "Server",
+            "name": "Name",
+            "room": "Room",
+            "preclip": "Pre Clip",
+            "postclip": "Post Clip",
+            "volume": "Volume"
+        },
+        "placeholder": {
+            "server": "localhost",
+            "port": 5005,
+            "lang": "en",
+            "name": "Name",
+            "room": "SONOS Room Name",
+            "volume": 50,
+            "preclipvol": 10,
+            "postclipvol": 10
+        },
+        "errors": {
+            "missing-config": "missing server configuration",
+            "invalid-value-type": "invalid value type"
+        }    
+    }
+}

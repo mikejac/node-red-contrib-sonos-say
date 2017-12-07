@@ -1,0 +1,110 @@
+<!--
+  Copyright 2017 Michael Jacobsen.
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+  http://www.apache.org/licenses/LICENSE-2.0
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<script type="text/x-red" data-template-name="sonos-http-server">
+    <div class="form-row node-input-server">
+        <label for="node-config-input-server"><i class="fa fa-globe"></i> <span data-i18n="sonos.label.server"></span></label>
+        <input class="input-append-left" type="text" id="node-config-input-server" placeholder="e.g. localhost" style="width: 40%;" >
+        <label for="node-config-input-port" style="margin-left: 10px; width: 35px; "> <span data-i18n="sonos.label.port"></span></label>
+        <input type="text" id="node-config-input-port" data-i18n="[placeholder]sonos.placeholder.port" style="width:45px">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-lang"><i class="fa fa-tag"></i> <span data-i18n="sonos.label.lang"></span></label>
+        <input type="text" id="node-config-input-lang" data-i18n="[placeholder]sonos.placeholder.lang">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="sonos-http-server">
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('sonos-http-server',{
+        category: 'config',
+        defaults: {
+            server: { value: "localhost", required: true },
+            port:   { value: 5005,        required: true, validate:RED.validators.number() },
+            lang:   { value: "",          required: true }
+        },
+        label: function() {
+            return this.name||"sonos-http server"
+        },
+        oneditprepare: function () {
+        },
+        oneditsave: function() {
+        }
+    })
+</script>
+
+<script type="text/x-red" data-template-name="sonos say">
+    <div class="form-row">
+        <label for="node-input-client"><i class="fa fa-globe"></i> <span data-i18n="sonos.label.sonos-client"></span></label>
+        <input type="text" id="node-input-client">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="sonos.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]sonos.label.name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-room"><i class="fa fa-tag"></i> <span data-i18n="sonos.label.room"></span></label>
+        <input type="text" id="node-input-room" data-i18n="[placeholder]sonos.placeholder.room">
+    </div>
+    <div class="form-row">
+        <label for="node-input-volume"><i class="fa fa-tag"></i> <span data-i18n="sonos.label.volume"></span></label>
+        <input type="text" id="node-input-volume" data-i18n="[placeholder]sonos.placeholder.volume" style="width:45px">
+    </div>
+    <div class="form-row node-input-preclip">
+        <label for="node-input-preclip"><i class="fa fa-globe"></i> <span data-i18n="sonos.label.preclip"></span></label>
+        <input class="input-append-left" type="text" id="node-input-preclip" style="width: 40%;" >
+        <label for="node-input-preclipvol" style="margin-left: 10px; width: 50px; "> <span data-i18n="sonos.label.volume"></span></label>
+        <input type="text" id="node-input-preclipvol" data-i18n="[placeholder]sonos.placeholder.preclipvol" style="width:45px">
+    </div>
+    <div class="form-row node-input-postclip">
+        <label for="node-input-postclip"><i class="fa fa-globe"></i> <span data-i18n="sonos.label.postclip"></span></label>
+        <input class="input-append-left" type="text" id="node-input-postclip" style="width: 40%;" >
+        <label for="node-input-postclipvol" style="margin-left: 10px; width: 50px; "> <span data-i18n="sonos.label.volume"></span></label>
+        <input type="text" id="node-input-postclipvol" data-i18n="[placeholder]sonos.placeholder.postclipvol" style="width:45px">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="sonos say">
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('sonos say',{
+        category: 'sonos-output',
+        defaults: {
+            client:     { type: "sonos-http-server", required: true},
+            room:       { value: "" },
+            volume:     { value: 50, validate: RED.validators.number() },
+            preclip:    { value: "" },
+            preclipvol: { value: 10, validate: RED.validators.number()},
+            postclip:   { value: "" },
+            postclipvol:{ value: 10, validate: RED.validators.number() },
+            name:       { value: "" }
+        },
+        color:"#4286f4",
+        inputs:1,
+        outputs:0,
+        icon: "bridge.png",
+        label: function() {
+            return this.name||"sonos say"
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":""
+        },
+        oneditprepare: function() {
+        },
+        oneditsave: function() {
+        }
+    });
+</script>

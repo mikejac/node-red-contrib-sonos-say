@@ -66,12 +66,6 @@ module.exports = function(RED) {
 
         if (this.clientConn) {
             node.clientConn.register(this)
-
-            this.on('close', function(done) {
-                if (node.clientConn) {
-                    node.clientConn.deregister(node, done)
-                }
-            })
         } else {
             this.error(RED._("sonos.errors.missing-config"))
         }
@@ -98,10 +92,11 @@ module.exports = function(RED) {
             }
             
             if (val == "<ignore>") {
+                RED.log.debug("SonosSayNode(input): ignore")
                 return
             }
 
-            RED.log.debug("val = " + val)
+            RED.log.debug("SonosSayNode(input): val = '" + val + "'")
 
             node.clientConn.say(node.room, 
                                 node.preClip, 
@@ -111,6 +106,22 @@ module.exports = function(RED) {
                                 val, 
                                 node.volume)
         })
+
+        /******************************************************************************************************************
+         * notifications coming from Node-RED
+         *
+         */
+        this.on('close', function(removed, done) {
+            if (node.clientConn) {
+                node.clientConn.deregister(node, done)
+            }
+
+            if (removed) {
+                // this node has been deleted
+            } else {
+                // this node is being restarted
+            }
+        });
     }
 
     RED.nodes.registerType("sonos say", SonosSayNode)
@@ -127,6 +138,7 @@ module.exports = function(RED) {
         this.port       = config.port
         this.lang       = config.lang
         this.users      = {}
+        this.closing    = false
 
         if (RED.settings.httpRequestTimeout) { 
             this.reqTimeout = parseInt(RED.settings.httpRequestTimeout) || 120000
@@ -147,14 +159,12 @@ module.exports = function(RED) {
         var node = this
 
         this.q = async.queue(function(url, callback) {
-            console.log("worker()")
-
             var method  = nodeMethod
             var ctSet   = "Content-Type"       // set default camel case
             var clSet   = "Content-Length"
             var payload = ""
 
-            RED.log.debug("worker(): url = " + url)
+            RED.log.debug("SonosHTTPServerNode(queue): url = " + url)
 
             var opts     = urllib.parse(url)
             opts.method  = method
@@ -224,7 +234,7 @@ module.exports = function(RED) {
                         node.warn(RED._("httpin.errors.json-error"))
                     }
 
-                    RED.log.debug("worker() " + msg.payload)
+                    RED.log.debug("SonosHTTPServerNode(queue): payload = " + msg.payload)
 
                     //
                     // mark that we're done
@@ -234,7 +244,6 @@ module.exports = function(RED) {
             })
 
             req.setTimeout(node.reqTimeout, function() {
-                console.log("request timeout!")
                 node.error(RED._("common.notification.errors.no-response"), msg)
                 setTimeout(function() {
                     node.warn("no response")
@@ -261,16 +270,16 @@ module.exports = function(RED) {
 
         // define functions called by our nodes
         this.register = function(sonosNode) {
-            RED.log.debug("register")
+            RED.log.debug("SonosHTTPServerNode(): register")
             node.users[sonosNode.id] = sonosNode
 
             if (Object.keys(node.users).length === 1) {
-                //node.connect()
+
             }
         }
 
         this.deregister = function(sonosNode, done) {
-            RED.log.debug("deregister")
+            RED.log.debug("SonosHTTPServerNode(): deregister")
             delete node.users[sonosNode.id]
 
             if (node.closing) {
@@ -278,32 +287,23 @@ module.exports = function(RED) {
             }
 
             if (Object.keys(node.users).length === 0) {
-                //if (node.blynk && node.client.connected) {
-                    //return node.client.end(done);
-                //} else {
-                    //node.client.end();
-                    return done()
-                //}
+                return done()
             }
 
             done()
         }
 
         this.say = function(room, preClip, preClipVol, postClip, postClipVol, text, volume) {
-            RED.log.debug("room        = " + room)
-            RED.log.debug("preClip     = " + preClip)
-            RED.log.debug("preClipVol  = " + preClipVol)
-            RED.log.debug("postClip    = " + postClip)
-            RED.log.debug("postClipVol = " + postClipVol)
-            RED.log.debug("text        = " + text)
-            RED.log.debug("volume      = " + volume)
+            RED.log.debug("SonosHTTPServerNode(): room        = " + room)
+            RED.log.debug("SonosHTTPServerNode(): preClip     = " + preClip)
+            RED.log.debug("SonosHTTPServerNode(): preClipVol  = " + preClipVol)
+            RED.log.debug("SonosHTTPServerNode(): postClip    = " + postClip)
+            RED.log.debug("SonosHTTPServerNode(): postClipVol = " + postClipVol)
+            RED.log.debug("SonosHTTPServerNode(): text        = " + text)
+            RED.log.debug("SonosHTTPServerNode(): volume      = " + volume)
 
             if (preClip != "" && preClipVol > 0) {
-                //console.log("worker(): preClip")
-
                 if (text != "" && volume > 0) {
-                    //console.log("worker(): pre-parse text")
-
                     // /[Room name]/say/[phrase][/[language_code]][/[announce volume]]
                     node.q.push(nodeUrl + "/" + room + "/say/" + text + "/" + node.lang + "/0", function(err) {
                         //console.log('finished processing pre-parse of text')
@@ -317,8 +317,6 @@ module.exports = function(RED) {
             }
 
             if (text != "" && volume > 0) {
-                //console.log("worker(): text")
-
                 // /[Room name]/say/[phrase][/[language_code]][/[announce volume]]
                 node.q.push(nodeUrl + "/" + room + "/say/" + text + "/" + node.lang + "/" + volume, function(err) {
                     //console.log('finished processing text')
@@ -326,8 +324,6 @@ module.exports = function(RED) {
             }
 
             if (postClip != "" && postClipVol > 0) {
-                //console.log("worker(): postClip")
-
                 // /{Room name}/clip/{filename}[/{announce volume}]
                 node.q.push(nodeUrl + "/" + room + "/clip/" + postClip + "/" + postClipVol, function(err) {
                     //console.log('finished processing postClip')
@@ -335,27 +331,22 @@ module.exports = function(RED) {
             }
         }
 
-        this.on('close', function(done) {
-            //node.brokerConn.deregister(node, done)
-        })
+        /******************************************************************************************************************
+         * notifications coming from Node-RED
+         *
+         */
+        this.on('close', function(removed, done) {
+            node.closing = true;
+
+            if (removed) {
+                // this node has been deleted
+            } else {
+                // this node is being restarted
+            }
+
+            done();
+        });
     }
 
     RED.nodes.registerType("sonos-http-server", SonosHTTPServerNode)
-
-	/******************************************************************************************************************
-	 * homemade - can't find a way to change the locale :-(
-	 *
-	 */
-    function timeNowString() {
-        var now     =   new Date()
-
-        var h       = ("0" + (now.getHours())).slice(-2)
-        var m       = ("0" + (now.getMinutes())).slice(-2)
-        var s       = ("0" + (now.getSeconds())).slice(-2)
-
-        var nowText = h + ":" + m + ":" + s
-
-        return nowText
-    }
-
 }
